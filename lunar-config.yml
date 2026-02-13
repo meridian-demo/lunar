@@ -1,0 +1,494 @@
+version: 0
+
+##################################################
+# Lunar Hub connection details                   #
+##################################################
+hub:
+  host: meridian.demo.earthly.dev
+  grpcPort: 443
+  httpPort: 443
+
+##################################################
+# Domains define structure and ownership         #
+##################################################
+domains:
+  engineering:
+    description: Meridian engineering
+    owner: engineering@meridian.dev
+  engineering.dashboard:
+    description: UI and dashboard applications
+    owner: kelly@meridian.dev
+  engineering.core:
+    description: Core components and libraries
+    owner: stephanie@meridian.dev
+  engineering.cloud:
+    description: Cloud services and APIs
+    owner: jose@meridian.dev
+
+#####################################################
+# Components define software units under governance  #
+#####################################################
+# Components are declared here for this sandbox. For larger organizations,
+# Lunar supports dynamic component discovery via catalogers — automatically
+# syncing from GitHub orgs, Backstage, or other sources. See the catalogers
+# documentation: https://docs-lunar.earthly.dev/lunar-config/catalogers
+components:
+  github.com/meridian-demo/backend:
+    owner: shane@meridian.dev
+    domain: engineering.dashboard
+    branch: "main"
+    tags: [backend, go, api, microservice, SOC2, internet-accessible]
+  github.com/meridian-demo/frontend:
+    owner: mick@meridian.dev
+    domain: engineering.dashboard
+    branch: "main"
+    tags: [frontend, node, react, web-app, internet-accessible]
+  github.com/meridian-demo/auth:
+    owner: dane@meridian.dev
+    domain: engineering.core
+    branch: "main"
+    tags: [backend, python, api, microservice, auth, SOC2, internet-accessible]
+  github.com/meridian-demo/spring-petclinic:
+    owner: alice@meridian.dev
+    domain: engineering.core
+    branch: "main"
+    tags: [backend, java, spring, web-app, SOC2, internet-accessible]
+  github.com/meridian-demo/inventory:
+    owner: bob@meridian.dev
+    domain: engineering.core
+    branch: "main"
+    tags: [backend, java, microservice, internal, SOC2]
+  github.com/meridian-demo/hadoop:
+    owner: dave@meridian.dev
+    domain: engineering.core
+    tags: [java, data-platform, internal, SOC2]
+  github.com/meridian-demo/spark:
+    owner: fahad@meridian.dev
+    domain: engineering.core
+    tags: [java, data-platform, internal, SOC2]
+  github.com/meridian-demo/ctlstore:
+    owner: peter@meridian.dev
+    domain: engineering.core
+    tags: [backend, go, SOC2, microservice, internet-accessible]
+  github.com/meridian-demo/kubeflow-manifests:
+    owner: simone@meridian.dev
+    domain: engineering.cloud
+    tags: [infra, k8s, helm, ml-platform, internal]
+  github.com/meridian-demo/prometheus-helm-charts:
+    owner: simone@meridian.dev
+    domain: engineering.cloud
+    tags: [infra, k8s, helm, monitoring, internal]
+  github.com/meridian-demo/DataProfiler:
+    owner: kelly@meridian.dev
+    domain: engineering.core
+    branch: "main"
+    tags: [backend, python, data-platform, internal, SOC2]
+  github.com/meridian-demo/datacompy:
+    owner: stephanie@meridian.dev
+    domain: engineering.core
+    branch: "main"
+    tags: [backend, python, data-platform, internal]
+  github.com/meridian-demo/react-native-pathjs-charts:
+    owner: mick@meridian.dev
+    domain: engineering.dashboard
+    branch: "master"
+    tags: [frontend, node, mobile, react-native]
+  github.com/meridian-demo/ant-project:
+    owner: dave@meridian.dev
+    domain: engineering.core
+    branch: "main"
+    tags: [backend, java, legacy, internal, infra, k8s, helm, SOC2]
+  github.com/meridian-demo/cqrs-manager-for-distributed-reactive-services:
+    owner: alice@meridian.dev
+    domain: engineering.core
+    branch: "master"
+    tags: [backend, java, microservice, event-driven, SOC2]
+  github.com/meridian-demo/fpe:
+    owner: peter@meridian.dev
+    domain: engineering.core
+    branch: "master"
+    tags: [backend, go, library, security, SOC2]
+  github.com/meridian-demo/checks-out:
+    owner: shane@meridian.dev
+    domain: engineering.core
+    branch: "dev"
+    tags: [backend, go, devtools, internal]
+
+########################################
+# Collectors get data from the CI jobs #
+########################################
+collectors:
+  # Programming languages
+  - uses: github://earthly/lunar-lib/collectors/rust@main
+    on: [rust]
+  - uses: github://earthly/lunar-lib/collectors/golang@main
+    on: ["domain:engineering"]
+  - uses: github://earthly/lunar-lib/collectors/python@main
+    on: ["domain:engineering"]
+  - uses: github://earthly/lunar-lib/collectors/nodejs@main
+    on: ["domain:engineering"]
+  - uses: github://earthly/lunar-lib/collectors/java@main
+    on: ["domain:engineering"]
+  - uses: ./collectors/ant
+    on: [java]
+  # Infrastructure
+  - uses: github://earthly/lunar-lib/collectors/k8s@main
+    on: ["domain:engineering"]
+  - uses: ./collectors/helm
+    on: ["domain:engineering"]
+  - uses: github://earthly/lunar-lib/collectors/docker@main
+    on: ["domain:engineering"]
+  - uses: github://earthly/lunar-lib/collectors/terraform@main
+    on: ["domain:engineering"]
+  # Repo standards, layout, and cataloging
+  - uses: ./collectors/backstage
+    on: ["domain:engineering"]
+  - uses: github://earthly/lunar-lib/collectors/readme@main
+    on: ["domain:engineering"]
+  - uses: github://earthly/lunar-lib/collectors/codeowners@main
+    on: ["domain:engineering"]
+  - uses: github://earthly/lunar-lib/collectors/dr-docs@main
+    on: [SOC2]
+  # CI/CD pipelines and build systems
+  - uses: ./collectors/argocd
+    on: ["domain:engineering"]
+  - uses: ./collectors/buildkite
+    on: ["domain:engineering"]
+  - uses: github://earthly/lunar-lib/collectors/ci-otel@main
+    on: ["domain:engineering"]
+  # Source control and ticketing
+  - uses: github://earthly/lunar-lib/collectors/github@main
+    on: ["domain:engineering"]
+  - uses: github://earthly/lunar-lib/collectors/jira@main
+    on: ["domain:engineering"]
+    runs_on: [prs]
+    with:
+      jira_base_url: "https://earthly.atlassian.net"
+      jira_user: "brandon@earthly.dev"
+  # Security & Compliance
+  - uses: github://earthly/lunar-lib/collectors/syft@main
+    on: ["domain:engineering"]
+  - uses: github://earthly/lunar-lib/collectors/semgrep@main
+    on: ["domain:engineering"]
+  - uses: github://earthly/lunar-lib/collectors/snyk@main
+    on: ["domain:engineering"]
+  - uses: github://earthly/lunar-lib/collectors/codecov@main
+    on: [backend]
+  # AI usage
+  - uses: github://earthly/lunar-lib/collectors/ai-use@main
+    on: ["domain:engineering"]
+  # AST-grep code pattern analysis
+  - uses: github://earthly/lunar-lib/collectors/ast-grep@main
+    on: [go]
+    with:
+      rules: |
+        id: logging.logrus_info
+        language: go
+        message: Found logrus.Info call
+        severity: hint
+        rule:
+          kind: call_expression
+          regex: "^logrus\\.Info"
+        ---
+        id: logging.logrus_fatal
+        language: go
+        message: Found logrus.Fatal call - consider error handling instead
+        severity: warning
+        rule:
+          kind: call_expression
+          regex: "^logrus\\.Fatal"
+        ---
+        id: http.hardcoded_port
+        language: go
+        message: Hardcoded port in ListenAndServe
+        severity: warning
+        rule:
+          kind: call_expression
+          regex: "^http\\.ListenAndServe"
+
+##################################
+# Initiatives aggregate policies #
+##################################
+initiatives:
+  - name: security-scanning
+    description: Vulnerability detection across code, dependencies, containers, and infrastructure
+    owner: security@meridian.dev
+    on: ["domain:engineering"]
+
+  - name: supply-chain
+    description: Software supply chain integrity — SBOMs, licenses, and dependency versions
+    owner: security@meridian.dev
+    on: ["domain:engineering"]
+
+  - name: code-health
+    description: Code quality, testing, and linting standards
+    owner: engineering@meridian.dev
+    on: ["domain:engineering"]
+
+  - name: operational-readiness
+    description: Production-ready infrastructure and container configuration
+    owner: engineering@meridian.dev
+    on: ["domain:engineering"]
+
+  - name: developer-standards
+    description: Repo documentation, ownership, and process conventions
+    owner: cto@meridian.dev
+    on: ["domain:engineering"]
+
+  - name: language-standards
+    description: Language version and toolchain requirements
+    owner: engineering@meridian.dev
+    on: ["domain:engineering"]
+
+##################################################
+# Policies define checks over the collected data #
+##################################################
+policies:
+  - uses: github://earthly/lunar-lib/policies/rust@main
+    on: [rust]
+    initiative: language-standards
+    enforcement: report-pr
+  - uses: ./policies/backstage
+    name: backstage
+    description: Checks if Backstage catalog file is present and valid
+    initiative: developer-standards
+    enforcement: score
+
+  - uses: github://earthly/lunar-lib/policies/container@main
+    name: container
+    description: Container definition and build policies
+    initiative: operational-readiness
+    enforcement: score
+    on: ["domain:engineering"]
+    exclude: [stable-tags]
+    with:
+      required_labels: "application_name,description,owner,source_uri,git_sha"
+      allowed_registries: "cgr.dev,gcr.io,docker.io"
+
+  - uses: github://earthly/lunar-lib/policies/container@main
+    name: container-stable-tags
+    description: Ensure Docker images use stable tags
+    initiative: operational-readiness
+    enforcement: report-pr
+    on: ["domain:engineering"]
+    include: [stable-tags]
+
+  - uses: github://earthly/lunar-lib/policies/k8s@main
+    name: k8s
+    description: Checks if k8s descriptors are valid
+    initiative: operational-readiness
+    enforcement: score
+    on: ["domain:engineering"]
+    with:
+      min_replicas: 3
+      max_limit_to_request_ratio: 4
+
+  - uses: github://earthly/lunar-lib/policies/iac@main
+    name: iac
+    description: IaC configuration validity, WAF protection, and destroy protection
+    initiative: operational-readiness
+    enforcement: score
+    on: ["domain:engineering"]
+
+  - uses: github://earthly/lunar-lib/policies/terraform@main
+    name: terraform
+    description: Terraform provider pinning, module pinning, and remote backend
+    initiative: operational-readiness
+    enforcement: score
+    on: ["domain:engineering"]
+
+  - uses: github://earthly/lunar-lib/policies/readme@main
+    name: readme
+    description: README best practices
+    initiative: developer-standards
+    enforcement: score
+    with:
+      min_lines: 1
+      required_sections: "Installation,Usage,Contributing"
+
+  - uses: github://earthly/lunar-lib/policies/sca@main
+    name: sca
+    description: Software Composition Analysis scanning standards
+    initiative: security-scanning
+    enforcement: score
+    on: ["domain:engineering"]
+    include: [executed]
+
+  - uses: github://earthly/lunar-lib/policies/sast@main
+    name: sast
+    description: Static Application Security Testing standards
+    initiative: security-scanning
+    enforcement: score
+    on: ["domain:engineering"]
+    include: [executed]
+
+  - uses: github://earthly/lunar-lib/policies/container-scan@main
+    name: container-scan
+    description: Container image vulnerability scanning standards
+    initiative: security-scanning
+    enforcement: score
+    on: ["domain:engineering"]
+    include: [executed]
+
+  - uses: github://earthly/lunar-lib/policies/iac-scan@main
+    name: iac-scan
+    description: Infrastructure as Code security scanning standards
+    initiative: security-scanning
+    enforcement: score
+    on: [infra]
+    include: [executed]
+
+  - uses: github://earthly/lunar-lib/policies/vcs@main
+    on: ["domain:engineering"]
+    include: [require-default-branch, disallow-force-push]
+    initiative: developer-standards
+    enforcement: score
+    with:
+      required_default_branch: "main"
+
+  - uses: github://earthly/lunar-lib/policies/dependencies@main
+    name: dependency-versions-go
+    description: Checks for vulnerable Go dependencies
+    on: [go]
+    initiative: supply-chain
+    enforcement: score
+    with:
+      language: "go"
+      min_versions: '{"github.com/sirupsen/logrus": "1.9.0"}'
+
+  - uses: github://earthly/lunar-lib/policies/dependencies@main
+    name: dependency-versions-java
+    description: Checks for vulnerable Java dependencies
+    on: [java]
+    initiative: supply-chain
+    enforcement: score
+    with:
+      language: "java"
+      min_versions: |-
+        {
+          "org.apache.commons:commons-text": "1.10.0"
+        }
+
+  - uses: github://earthly/lunar-lib/policies/linter@main
+    on: [go]
+    initiative: code-health
+    enforcement: score
+    with:
+      language: "go"
+      max_warnings: "10"
+
+  - uses: github://earthly/lunar-lib/policies/testing@main
+    on: ["domain:engineering"]
+    initiative: code-health
+    enforcement: report-pr
+    include: [executed]
+
+  - uses: github://earthly/lunar-lib/policies/testing@main
+    name: testing-quality
+    on: ["domain:engineering"]
+    initiative: code-health
+    enforcement: score
+    exclude: [executed]
+
+  - uses: github://earthly/lunar-lib/policies/golang@main
+    on: [go]
+    initiative: language-standards
+    enforcement: score
+    with:
+      min_go_version: "1.21"
+      min_go_version_cicd: "1.21"
+
+  - uses: github://earthly/lunar-lib/policies/java@main
+    name: java
+    description: Requires recent versions of Java and Maven in CI/CD
+    initiative: language-standards
+    enforcement: score
+    on: [java]
+    with:
+      min_java_version: "17.0.0"
+      min_maven_version: "3.9.0"
+      min_gradle_version: "8.0.0"
+
+  - uses: ./policies/ant
+    name: ant
+    description: Requires a recent version of Apache Ant
+    initiative: language-standards
+    enforcement: report-pr
+    on: [java]
+    with:
+      min_ant_version: "1.10.0"
+
+  - uses: github://earthly/lunar-lib/policies/python@main
+    name: python
+    description: Python project structure and standards
+    initiative: language-standards
+    enforcement: score
+    on: [python]
+    with:
+      min_python_version: "3.9"
+      min_python_version_cicd: "3.9"
+
+  - uses: github://earthly/lunar-lib/policies/nodejs@main
+    name: nodejs
+    description: Node.js project structure and standards
+    initiative: language-standards
+    enforcement: score
+    on: [node]
+    with:
+      min_node_version: "18"
+
+  - uses: github://earthly/lunar-lib/policies/codeowners@main
+    name: codeowners
+    description: Code ownership standards via CODEOWNERS file
+    initiative: developer-standards
+    enforcement: score
+    on: ["domain:engineering"]
+
+  - uses: github://earthly/lunar-lib/policies/ai-use@main
+    name: ai-use
+    description: AI coding assistant usage standards
+    initiative: developer-standards
+    enforcement: score
+    on: ["domain:engineering"]
+
+  - uses: github://earthly/lunar-lib/policies/compliance-docs@main
+    name: compliance-docs
+    description: Compliance documentation verification
+    initiative: supply-chain
+    enforcement: score
+    on: [SOC2]
+
+  - uses: github://earthly/lunar-lib/policies/feature-flags@main
+    name: feature-flags
+    description: Feature flag hygiene and lifecycle management
+    initiative: code-health
+    enforcement: score
+    on: ["domain:engineering"]
+
+  - uses: github://earthly/lunar-lib/policies/ticket@main
+    name: ticket
+    description: PR ticket reference standards
+    initiative: developer-standards
+    enforcement: report-pr
+    on: ["domain:engineering"]
+    runs_on: [prs]
+
+  - uses: github://earthly/lunar-lib/policies/sbom@main
+    name: sbom
+    description: Ensure SBOMs are generated and contain only approved licenses
+    initiative: supply-chain
+    enforcement: block-pr-and-release
+    on: ["domain:engineering"]
+    include: [sbom-exists, disallowed-licenses]
+    with:
+      disallowed_licenses: "GPL.*,BSL.*,AGPL.*,SSPL.*,EUPL.*"
+
+  - uses: github://earthly/lunar-lib/policies/sbom@main
+    name: sbom-quality
+    description: SBOM quality and license compliance
+    initiative: supply-chain
+    enforcement: score
+    on: ["domain:engineering"]
+    exclude: [sbom-exists, disallowed-licenses]
+    with:
+      disallowed_licenses: "GPL.*,BSL.*,AGPL.*,SSPL.*,EUPL.*"

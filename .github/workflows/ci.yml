@@ -1,0 +1,20 @@
+name: Policy sync
+on:
+  push:
+    branches:
+      - "**"
+jobs:
+  pull-policy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Extract branch name
+      shell: bash
+      run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+      id: extract_branch
+    - name: Run sync-manifest action
+      uses: earthly/lunar-actions/sync-manifest@main
+      with:
+        lunar-version: v1.0.0
+        manifest-url: github://meridian-demo/lunar@${{ steps.extract_branch.outputs.branch }}
+        hub-token: ${{ secrets.LUNAR_HUB_TOKEN }}
+        hub-host: meridian.demo.earthly.dev

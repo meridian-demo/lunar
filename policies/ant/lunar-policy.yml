@@ -1,0 +1,14 @@
+version: 0
+
+name: ant
+description: Requires a recent version of Apache Ant in CI/CD
+author: core-team@meridian.dev
+
+policies:
+  - name: min-version
+    mainPython: ./min-version.py
+
+inputs:
+  min_ant_version:
+    description: The minimum Ant version
+    default: "1.10.0"

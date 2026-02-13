@@ -1,0 +1,15 @@
+version: 0
+
+name: ant
+description: Detects Apache Ant commands in CI and extracts the version.
+
+default_image_ci_collectors: native
+
+collectors:
+  - name: cicd
+    description: Records Ant commands run in CI with version info.
+    mainBash: ant-cicd.sh
+    hook:
+      type: ci-after-command
+      binary:
+        name: ant

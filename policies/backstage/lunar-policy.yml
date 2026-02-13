@@ -1,0 +1,9 @@
+version: 0
+
+name: backstage
+description: Checks if backstage file exists and is valid
+author: core-team@meridian.dev
+
+policies:
+  - name: backstage
+    mainPython: ./main.py

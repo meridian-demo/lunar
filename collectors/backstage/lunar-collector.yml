@@ -1,0 +1,11 @@
+version: 0
+
+name: backstage
+default_image: earthly/lunar-lib:base-main
+
+collectors:
+  - name: backstage
+    description: Collect and run validation on the Backstage catalog-info.yaml 
+    mainBash: main.sh 
+    hook:
+      type: code

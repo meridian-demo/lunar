@@ -1,0 +1,12 @@
+version: 0
+
+default_image: earthly/lunar-lib:base-main
+
+name: argocd
+
+collectors:
+  - name: argocd
+    description: Collect ArgoCD applications and projects
+    mainBash: main.sh
+    hook:
+      type: code
