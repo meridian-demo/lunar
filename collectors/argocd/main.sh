@@ -34,7 +34,11 @@ process_file() {
 
 export -f process_file
 
-git ls-files '*.yaml' '*.yml' | \
+result=$(git ls-files '*.yaml' '*.yml' | \
   parallel -j 4 process_file | \
-  jq -s '{applications: .}' | \
-  lunar collect -j ".argocd" -
+  jq -s '{applications: .}')
+
+count=$(echo "$result" | jq '.applications | length' 2>/dev/null || echo 0)
+if [ "$count" -gt 0 ]; then
+  echo "$result" | lunar collect -j ".argocd" -
+fi

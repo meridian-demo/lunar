@@ -32,9 +32,13 @@ process_pipeline() {
 
 export -f process_pipeline
 
-find . -name "pipeline.yml" -o -name "pipeline.yaml" | \
+result=$(find . -name "pipeline.yml" -o -name "pipeline.yaml" | \
   xargs -I {} dirname {} | \
   sort -u | \
   parallel -j 4 process_pipeline | \
-  jq -s '{pipelines: .}' | \
-  lunar collect -j ".buildkite" -
+  jq -s '{pipelines: .}')
+
+count=$(echo "$result" | jq '.pipelines | length' 2>/dev/null || echo 0)
+if [ "$count" -gt 0 ]; then
+  echo "$result" | lunar collect -j ".buildkite" -
+fi

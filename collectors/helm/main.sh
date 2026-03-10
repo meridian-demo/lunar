@@ -41,9 +41,13 @@ export -f process_chart
 
 # Find all unique directories containing Chart.yaml or Chart.yml
 # Process them in parallel, which can improve performance on large repositories.
-find . -name "Chart.yaml" -o -name "Chart.yml" | \
+result=$(find . -name "Chart.yaml" -o -name "Chart.yml" | \
   xargs -I {} dirname {} | \
   sort -u | \
   parallel -j 4 process_chart | \
-  jq -s '{charts: .}' | \
-  lunar collect -j ".helm" -
+  jq -s '{charts: .}')
+
+count=$(echo "$result" | jq '.charts | length' 2>/dev/null || echo 0)
+if [ "$count" -gt 0 ]; then
+  echo "$result" | lunar collect -j ".helm" -
+fi

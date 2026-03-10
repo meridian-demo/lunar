@@ -54,7 +54,11 @@ process_file() {
 
 export -f process_file
 
-git ls-files '*.yaml' '*.yml' | \
+result=$(git ls-files '*.yaml' '*.yml' | \
   parallel -j 24 process_file | \
-  jq -s '{catalogs: .}' | \
-  lunar collect -j ".backstage" -
+  jq -s '{catalogs: .}')
+
+count=$(echo "$result" | jq '.catalogs | length' 2>/dev/null || echo 0)
+if [ "$count" -gt 0 ]; then
+  echo "$result" | lunar collect -j ".backstage" -
+fi
