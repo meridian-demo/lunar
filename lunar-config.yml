@@ -269,7 +269,7 @@ policies:
     name: container-stable-tags
     description: Ensure Docker images use stable tags
     initiative: operational-readiness
-    enforcement: report-pr
+    enforcement: block-pr
     on: ["domain:engineering"]
     include: [stable-tags]
 
