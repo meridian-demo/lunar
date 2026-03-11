@@ -258,11 +258,21 @@ policies:
     name: container
     description: Container definition and build policies
     initiative: operational-readiness
+    enforcement: score
+    on: ["domain:engineering"]
+    exclude: [stable-tags, required-labels, healthcheck]
+    with:
+      allowed_registries: "cgr.dev,gcr.io,docker.io"
+
+  - uses: github://earthly/lunar-lib/policies/container@main
+    name: container-stable-tags
+    description: Ensure Docker images use stable tags
+    initiative: operational-readiness
     enforcement: block-pr
     on: ["domain:engineering"]
+    include: [stable-tags, required-labels, healthcheck]
     with:
       required_labels: "git_sha"
-      allowed_registries: "cgr.dev,gcr.io,docker.io"
 
   - uses: github://earthly/lunar-lib/policies/k8s@main
     name: k8s
